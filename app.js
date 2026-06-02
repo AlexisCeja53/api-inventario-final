@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// CONEXIÓN A BASE DE DATOS
+// CONEXIÓN A BASE DE DATOS (POOL)
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -18,14 +18,14 @@ const db = mysql.createPool({
   port: process.env.DB_PORT || 3306
 });
 
-// CONFIGURACIÓN IGUAL A LA IMAGEN 9af922
+// CONFIGURACIÓN (Imagen 9af922)
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'API - Inventario',
       version: '1.0.0',
-      description: 'Documentación del Sistema de Inventarios - ITNL'
+      description: 'Proyecto Final de Inventarios - ITNL'
     },
     servers: [
       {
@@ -53,7 +53,7 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- RUTAS (Formato idéntico a la imagen 9af919) ---
+// --- RUTAS (Copiando la sangría de la imagen 9af919) ---
 
 /**
  * @swagger
