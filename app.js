@@ -1,116 +1,162 @@
 const express = require('express');
 const mysql = require('mysql2');
+const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
-// PERMISOS DE CONEXIÓN (CORS)
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    next();
-});
-
-// 1. CONEXIÓN A LA BASE DE DATOS (POOL)
+// 1. CONEXIÓN A LA BASE DE DATOS
 const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306
 });
 
-// 2. DOCUMENTACIÓN SWAGGER (Cumple con lo pedido por el profesor)
-const swaggerDocument = {
+// 2. CONFIGURACIÓN DE SWAGGER (Título actualizado)
+const swaggerOptions = {
+  definition: {
     openapi: '3.0.0',
     info: {
-        title: 'Sistema de Gestión de Inventarios - ITNL',
-        version: '1.0.0',
-        description: 'API para el control de stock y productos'
+      title: 'API - Inventario',
+      version: '1.0.0',
+      description: 'Documentación del Sistema de Inventarios'
     },
-    servers: [{ url: 'https://' + process.env.RAILWAY_STATIC_URL }],
-    paths: {
-        '/productos': {
-            get: {
-                summary: 'Listar todos los productos',
-                responses: { '200': { description: 'Lista obtenida' } }
-            },
-            post: {
-                summary: 'Agregar nuevo producto',
-                requestBody: {
-                    content: { 'application/json': { schema: {
-                        type: 'object',
-                        properties: {
-                            nombre: { type: 'string', example: 'Producto Prueba' },
-                            precio: { type: 'number', example: 50.0 },
-                            stock: { type: 'integer', example: 10 }
-                        }
-                    } } }
-                },
-                responses: { '201': { description: 'Creado' } }
-            }
-        },
-        '/productos/{id}': {
-            put: {
-                summary: 'Actualizar producto por ID',
-                parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
-                requestBody: {
-                    content: { 'application/json': { schema: {
-                        type: 'object',
-                        properties: { nombre: {type:'string'}, precio: {type:'number'}, stock: {type:'integer'} }
-                    } } }
-                },
-                responses: { '200': { description: 'Actualizado' } }
-            },
-            delete: {
-                summary: 'Eliminar producto por ID',
-                parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
-                responses: { '200': { description: 'Eliminado' } }
-            }
-        }
-    }
+    servers: [
+      {
+        url: 'https://api-final-inventario-production.up.railway.app',
+        description: 'Servidor de Producción'
+      }
+    ]
+  },
+  apis: ['./app.js']
 };
 
-app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- MÉTODOS CRUD ---
+// --- RUTAS CON COMENTARIOS (MODALIDAD SOLICITADA) ---
 
+/**
+ * @openapi
+ * /productos:
+ * get:
+ * tags:
+ * - Productos
+ * summary: Obtener todos los productos
+ * responses:
+ * 200:
+ * description: Lista obtenida exitosamente
+ */
 app.get('/productos', (req, res) => {
-    db.query('SELECT * FROM productos', (err, results) => {
-        if (err) return res.status(500).json(err);
-        res.json(results);
-    });
+  db.query('SELECT * FROM productos', (err, results) => {
+    if (err) return res.status(500).json(err);
+    res.json(results);
+  });
 });
 
+/**
+ * @openapi
+ * /productos:
+ * post:
+ * tags:
+ * - Productos
+ * summary: Agregar un nuevo producto
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * nombre:
+ * type: string
+ * precio:
+ * type: number
+ * stock:
+ * type: integer
+ * responses:
+ * 201:
+ * description: Creado
+ */
 app.post('/productos', (req, res) => {
-    const { nombre, precio, stock } = req.body;
-    db.query('INSERT INTO productos (nombre, precio, stock) VALUES (?, ?, ?)', 
-    [nombre, precio, stock], (err, result) => {
-        if (err) return res.status(500).json(err);
-        res.status(201).json({ id: result.insertId, mensaje: "Producto creado" });
-    });
+  const { nombre, precio, stock } = req.body;
+  db.query('INSERT INTO productos (nombre, precio, stock) VALUES (?, ?, ?)', 
+  [nombre, precio, stock], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.status(201).json({ id: result.insertId, mensaje: "Producto creado" });
+  });
 });
 
+/**
+ * @openapi
+ * /productos/{id}:
+ * put:
+ * tags:
+ * - Productos
+ * summary: Actualizar un producto existente
+ * parameters:
+ * - in: path
+ * name: id
+ * required: true
+ * schema:
+ * type: integer
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * nombre:
+ * type: string
+ * precio:
+ * type: number
+ * stock:
+ * type: integer
+ * responses:
+ * 200:
+ * description: Actualizado
+ */
 app.put('/productos/:id', (req, res) => {
-    const { id } = req.params;
-    const { nombre, precio, stock } = req.body;
-    db.query('UPDATE productos SET nombre=?, precio=?, stock=? WHERE id=?', 
-    [nombre, precio, stock, id], (err) => {
-        if (err) return res.status(500).json(err);
-        res.json({ mensaje: "Producto actualizado" });
-    });
+  const { id } = req.params;
+  const { nombre, precio, stock } = req.body;
+  db.query('UPDATE productos SET nombre=?, precio=?, stock=? WHERE id=?', 
+  [nombre, precio, stock, id], (err) => {
+    if (err) return res.status(500).json(err);
+    res.json({ mensaje: "Producto actualizado" });
+  });
 });
 
+/**
+ * @openapi
+ * /productos/{id}:
+ * delete:
+ * tags:
+ * - Productos
+ * summary: Eliminar un producto
+ * parameters:
+ * - in: path
+ * name: id
+ * required: true
+ * schema:
+ * type: integer
+ * responses:
+ * 200:
+ * description: Eliminado
+ */
 app.delete('/productos/:id', (req, res) => {
-    const { id } = req.params;
-    db.query('DELETE FROM productos WHERE id=?', [id], (err) => {
-        if (err) return res.status(500).json(err);
-        res.json({ mensaje: "Producto eliminado" });
-    });
+  const { id } = req.params;
+  db.query('DELETE FROM productos WHERE id=?', [id], (err) => {
+    if (err) return res.status(500).json(err);
+    res.json({ mensaje: "Producto eliminado" });
+  });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor activo`));
+app.listen(PORT, () => console.log('Servidor activo'));
