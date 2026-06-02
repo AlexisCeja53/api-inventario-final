@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// CONEXIÓN A BASE DE DATOS (POOL)
+// Conexión a la base de datos
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -18,58 +18,37 @@ const db = mysql.createPool({
   port: process.env.DB_PORT || 3306
 });
 
-// CONFIGURACIÓN (Imagen 9af922)
+// Configuración de Swagger
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'API - Inventario',
       version: '1.0.0',
-      description: 'Proyecto Final de Inventarios - ITNL'
+      description: 'Documentación del Sistema de Inventarios'
     },
     servers: [
       {
         url: 'https://api-final-inventario-production.up.railway.app'
       }
-    ],
-    components: {
-      schemas: {
-        Inventario: {
-          type: 'object',
-          required: ['nombre', 'precio', 'stock'],
-          properties: {
-            id: { type: 'integer' },
-            nombre: { type: 'string' },
-            precio: { type: 'number' },
-            stock: { type: 'integer' }
-          }
-        }
-      }
-    }
+    ]
   },
-  apis: ['./app.js']
+  apis: ['./app.js'] // Railway necesita el path relativo exacto
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- RUTAS (Copiando la sangría de la imagen 9af919) ---
-
 /**
- * @swagger
+ * @openapi
  * /productos:
  * get:
- * summary: Obtener lista de inventario
- * tags: [Inventario]
+ * tags:
+ * - Inventario
+ * summary: Obtener lista de productos
  * responses:
  * 200:
  * description: Lista obtenida correctamente
- * content:
- * application/json:
- * schema:
- * type: array
- * items:
- * $ref: '#/components/schemas/Inventario'
  */
 app.get('/productos', (req, res) => {
   db.query('SELECT * FROM productos', (err, results) => {
@@ -79,20 +58,28 @@ app.get('/productos', (req, res) => {
 });
 
 /**
- * @swagger
+ * @openapi
  * /productos:
  * post:
+ * tags:
+ * - Inventario
  * summary: Agregar nuevo producto
- * tags: [Inventario]
  * requestBody:
  * required: true
  * content:
  * application/json:
  * schema:
- * $ref: '#/components/schemas/Inventario'
+ * type: object
+ * properties:
+ * nombre:
+ * type: string
+ * precio:
+ * type: number
+ * stock:
+ * type: integer
  * responses:
  * 201:
- * description: Creado exitosamente
+ * description: Creado
  */
 app.post('/productos', (req, res) => {
   const { nombre, precio, stock } = req.body;
@@ -104,11 +91,12 @@ app.post('/productos', (req, res) => {
 });
 
 /**
- * @swagger
+ * @openapi
  * /productos/{id}:
  * put:
+ * tags:
+ * - Inventario
  * summary: Actualizar producto por ID
- * tags: [Inventario]
  * parameters:
  * - in: path
  * name: id
@@ -120,7 +108,14 @@ app.post('/productos', (req, res) => {
  * content:
  * application/json:
  * schema:
- * $ref: '#/components/schemas/Inventario'
+ * type: object
+ * properties:
+ * nombre:
+ * type: string
+ * precio:
+ * type: number
+ * stock:
+ * type: integer
  * responses:
  * 200:
  * description: Actualizado
@@ -136,11 +131,12 @@ app.put('/productos/:id', (req, res) => {
 });
 
 /**
- * @swagger
+ * @openapi
  * /productos/{id}:
  * delete:
+ * tags:
+ * - Inventario
  * summary: Eliminar producto
- * tags: [Inventario]
  * parameters:
  * - in: path
  * name: id
