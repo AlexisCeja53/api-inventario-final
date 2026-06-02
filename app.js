@@ -7,7 +7,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// 1. Conexión a la Base de Datos
+// 1. Conexión a la Base de Datos con puerto dinámico
 const db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -17,63 +17,37 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-    if (err) {
-        console.error('Error de conexión:', err);
-        return;
-    }
-    console.log('Conectado a MySQL en la nube');
+    if (err) return console.error('Error MySQL:', err);
+    console.log('Conectado a la base de datos');
 });
 
-// 2. Configuración de Swagger con "Esquemas" (Más seguro)
+// 2. Configuración de Swagger optimizada
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'API de Inventario - Proyecto Final',
+            title: 'API Inventario Final',
             version: '1.0.0',
-            description: 'Control de Stock para el Tercer Parcial - ITNL',
+            description: 'Proyecto Final para el Tercer Parcial - ITNL'
         },
-        servers: [
-            { url: 'http://localhost:3000', description: 'Local' },
-            { url: 'https://' + process.env.RAILWAY_STATIC_URL, description: 'Producción' }
-        ],
-        components: {
-            schemas: {
-                Producto: {
-                    type: 'object',
-                    required: ['nombre', 'precio', 'stock'],
-                    properties: {
-                        id: { type: 'integer' },
-                        nombre: { type: 'string' },
-                        precio: { type: 'number' },
-                        stock: { type: 'integer' }
-                    }
-                }
-            }
-        }
+        servers: [{ url: 'http://localhost:3000' }]
     },
-    apis: ['./app.js'],
+    apis: ['./app.js']
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- RUTAS DE LA API ---
+// --- RUTAS DE INVENTARIO ---
 
 /**
  * @openapi
  * /productos:
  * get:
- * summary: Obtener lista de inventario
+ * summary: Obtener todos los productos
  * responses:
  * 200:
- * description: Lista obtenida
- * content:
- * application/json:
- * schema:
- * type: array
- * items:
- * $ref: '#/components/schemas/Producto'
+ * description: Éxito
  */
 app.get('/productos', (req, res) => {
     db.query('SELECT * FROM productos', (err, results) => {
@@ -87,15 +61,9 @@ app.get('/productos', (req, res) => {
  * /productos:
  * post:
  * summary: Agregar nuevo producto
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * $ref: '#/components/schemas/Producto'
  * responses:
  * 201:
- * description: Creado correctamente
+ * description: Creado
  */
 app.post('/productos', (req, res) => {
     const { nombre, precio, stock } = req.body;
@@ -110,19 +78,11 @@ app.post('/productos', (req, res) => {
  * @openapi
  * /productos/{id}:
  * put:
- * summary: Actualizar stock o precio
+ * summary: Actualizar producto
  * parameters:
  * - in: path
  * name: id
  * required: true
- * schema:
- * type: integer
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * $ref: '#/components/schemas/Producto'
  * responses:
  * 200:
  * description: Actualizado
@@ -146,8 +106,6 @@ app.put('/productos/:id', (req, res) => {
  * - in: path
  * name: id
  * required: true
- * schema:
- * type: integer
  * responses:
  * 200:
  * description: Eliminado
@@ -161,4 +119,4 @@ app.delete('/productos/:id', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
