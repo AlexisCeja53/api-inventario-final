@@ -1,12 +1,18 @@
 const express = require('express');
 const mysql = require('mysql2');
 const swaggerUi = require('swagger-ui-express');
-const cors = require('cors'); 
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
-app.use(cors()); // Esto es para que los botones de Swagger no se bloqueen
+
+// --- CONFIGURACIÓN DE CORS MANUAL (Sin librerías) ---
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    next();
+});
 
 // 1. Conexión a la Base de Datos
 const db = mysql.createConnection({
@@ -22,11 +28,11 @@ db.connect((err) => {
     console.log('Conectado a la base de datos MySQL');
 });
 
-// 2. DOCUMENTACIÓN (Escrita directamente para que NO falle)
+// 2. DOCUMENTACIÓN (Escrita directamente para que NADA falle)
 const swaggerDocument = {
     openapi: '3.0.0',
     info: {
-        title: 'API Inventario Final - ITNL',
+        title: 'API - Inventario',
         version: '1.0.0',
         description: 'Proyecto Final de Ingeniería en Sistemas'
     },
@@ -37,10 +43,10 @@ const swaggerDocument = {
         '/productos': {
             get: {
                 summary: 'Listar todos los productos',
-                responses: { '200': { description: 'Éxito' } }
+                responses: { '200': { description: 'Exito' } }
             },
             post: {
-                summary: 'Agregar producto (Escribe aquí los datos)',
+                summary: 'Agregar producto',
                 requestBody: {
                     content: {
                         'application/json': {
@@ -89,8 +95,7 @@ const swaggerDocument = {
 
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// --- LAS RUTAS QUE HACEN EL TRABAJO ---
-
+// --- RUTAS ---
 app.get('/productos', (req, res) => {
     db.query('SELECT * FROM productos', (err, results) => {
         if (err) return res.status(500).json(err);
