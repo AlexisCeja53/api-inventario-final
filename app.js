@@ -24,7 +24,7 @@ db.connect((err) => {
 const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
-        title: 'API Inventario Final - ITNL',
+        title: 'API- INVENTARIO',
         version: '1.0.0',
         description: 'Proyecto Final de Sistemas para el Tercer Parcial'
     },
