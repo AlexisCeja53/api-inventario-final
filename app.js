@@ -107,19 +107,22 @@ app.post('/productos', (req, res) => {
  * schema:
  * type: object
  * properties:
- * nombre: { type: string }
- * precio: { type: number }
- * stock: { type: integer }
+ * nombre:
+ * type: string
+ * precio:
+ * type: number
+ * stock:
+ * type: integer
  * responses:
  * 200:
- * description: Producto actualizado correctamente.
+ * description: Producto actualizado correctamente
  */
 app.put('/productos/:id', (req, res) => {
     const { id } = req.params;
     const { nombre, precio, stock } = req.body;
-    db.query('UPDATE productos SET nombre = ?, precio = ?, stock = ? WHERE id = ?', 
-    [nombre, precio, stock, id], (err, result) => {
-        if (err) return res.status(500).send(err);
+    const query = 'UPDATE productos SET nombre = ?, precio = ?, stock = ? WHERE id = ?';
+    db.query(query, [nombre, precio, stock, id], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
         res.json({ mensaje: "Producto actualizado", id });
     });
 });
@@ -137,12 +140,12 @@ app.put('/productos/:id', (req, res) => {
  * type: integer
  * responses:
  * 200:
- * description: Producto eliminado.
+ * description: Producto eliminado exitosamente
  */
 app.delete('/productos/:id', (req, res) => {
     const { id } = req.params;
     db.query('DELETE FROM productos WHERE id = ?', [id], (err, result) => {
-        if (err) return res.status(500).send(err);
+        if (err) return res.status(500).json({ error: err.message });
         res.json({ mensaje: "Producto eliminado", id });
     });
 });
