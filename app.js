@@ -1,12 +1,14 @@
 const express = require('express');
 const mysql = require('mysql2');
 const swaggerUi = require('swagger-ui-express');
+const cors = require('cors'); // <--- Nueva librería
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+app.use(cors()); // <--- Esto permite que los botones de Swagger funcionen
 
-// 1. Conexión a la Base de Datos (Usa las variables de Railway)
+// 1. Conexión a la Base de Datos
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -17,39 +19,65 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
     if (err) return console.error('Error MySQL:', err);
-    console.log('Conectado a la base de datos');
+    console.log('Conectado a la base de datos MySQL');
 });
 
-// 2. Definición de Swagger con la URL de PRODUCCIÓN
+// 2. Documentación Swagger (Con cuadros de texto para parámetros)
 const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
         title: 'API - Inventario',
         version: '1.0.0',
-        description: 'Proyecto Final para el Tercer Parcial'
+        description: 'Proyecto Final de Ingeniería en Sistemas'
     },
     servers: [
-        {
-            // ESTA ES TU URL DE RAILWAY. Swagger la usará para los botones.
-            url: 'https://api-final-inventario-production.up.railway.app',
-            description: 'Servidor en la Nube'
-        }
+        { url: 'https://api-final-inventario-production.up.railway.app', description: 'Servidor Railway' }
     ],
     paths: {
         '/productos': {
             get: {
-                summary: 'Ver todos los productos',
-                responses: { '200': { description: 'Lista obtenida' } }
+                summary: 'Obtener lista de productos',
+                responses: { '200': { description: 'Lista obtenida con éxito' } }
             },
             post: {
-                summary: 'Agregar producto',
-                responses: { '201': { description: 'Creado' } }
+                summary: 'Agregar nuevo producto',
+                requestBody: {
+                    required: true,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                properties: {
+                                    nombre: { type: 'string', example: 'Refresco 600ml' },
+                                    precio: { type: 'number', example: 18.50 },
+                                    stock: { type: 'integer', example: 24 }
+                                }
+                            }
+                        }
+                    }
+                },
+                responses: { '201': { description: 'Producto creado' } }
             }
         },
         '/productos/{id}': {
             put: {
                 summary: 'Actualizar producto',
                 parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+                requestBody: {
+                    required: true,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                properties: {
+                                    nombre: { type: 'string' },
+                                    precio: { type: 'number' },
+                                    stock: { type: 'integer' }
+                                }
+                            }
+                        }
+                    }
+                },
                 responses: { '200': { description: 'Actualizado' } }
             },
             delete: {
@@ -63,7 +91,7 @@ const swaggerDefinition = {
 
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
 
-// --- RUTAS FUNCIONALES ---
+// --- RUTAS DEL INVENTARIO ---
 
 app.get('/productos', (req, res) => {
     db.query('SELECT * FROM productos', (err, results) => {
