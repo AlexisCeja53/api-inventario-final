@@ -7,7 +7,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// 1. Conexión a la Base de Datos con puerto dinámico
+// 1. Conexión a la Base de Datos
 const db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -18,17 +18,17 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
     if (err) return console.error('Error MySQL:', err);
-    console.log('Conectado a la base de datos');
+    console.log('Conectado a la base de datos MySQL');
 });
 
-// 2. Configuración de Swagger optimizada
+// 2. Configuración de Swagger Simplificada
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
             title: 'API Inventario Final',
             version: '1.0.0',
-            description: 'Proyecto Final para el Tercer Parcial - ITNL'
+            description: 'Proyecto Final de Sistemas - ITNL'
         },
         servers: [{ url: 'http://localhost:3000' }]
     },
@@ -44,10 +44,10 @@ app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  * @openapi
  * /productos:
  * get:
- * summary: Obtener todos los productos
+ * summary: Lista de productos
  * responses:
  * 200:
- * description: Éxito
+ * description: OK
  */
 app.get('/productos', (req, res) => {
     db.query('SELECT * FROM productos', (err, results) => {
@@ -60,7 +60,7 @@ app.get('/productos', (req, res) => {
  * @openapi
  * /productos:
  * post:
- * summary: Agregar nuevo producto
+ * summary: Agregar producto
  * responses:
  * 201:
  * description: Creado
@@ -78,7 +78,7 @@ app.post('/productos', (req, res) => {
  * @openapi
  * /productos/{id}:
  * put:
- * summary: Actualizar producto
+ * summary: Editar producto
  * parameters:
  * - in: path
  * name: id
@@ -119,4 +119,4 @@ app.delete('/productos/:id', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor listo en puerto ${PORT}`));
