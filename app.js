@@ -7,56 +7,77 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// 1. Configuración de la conexión a MySQL
+// 1. Conexión a la Base de Datos
 const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT 
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'railway',
+    port: process.env.DB_PORT || 3306
 });
 
 db.connect((err) => {
     if (err) {
-        console.error('Error conectando a la base de datos:', err);
+        console.error('Error de conexión:', err);
         return;
     }
-    console.log('Conectado a la base de datos MySQL');
+    console.log('Conectado a MySQL en la nube');
 });
 
-// 2. Configuración de Swagger / OpenAPI
+// 2. Configuración de Swagger con "Esquemas" (Más seguro)
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'API de Gestión de Inventario',
+            title: 'API de Inventario - Proyecto Final',
             version: '1.0.0',
-            description: 'Proyecto Final para el Tercer Parcial - Control de Stock',
+            description: 'Control de Stock para el Tercer Parcial - ITNL',
         },
         servers: [
-            { url: 'http://localhost:3000', description: 'Servidor Local' },
+            { url: 'http://localhost:3000', description: 'Local' },
+            { url: 'https://' + process.env.RAILWAY_STATIC_URL, description: 'Producción' }
         ],
+        components: {
+            schemas: {
+                Producto: {
+                    type: 'object',
+                    required: ['nombre', 'precio', 'stock'],
+                    properties: {
+                        id: { type: 'integer' },
+                        nombre: { type: 'string' },
+                        precio: { type: 'number' },
+                        stock: { type: 'integer' }
+                    }
+                }
+            }
+        }
     },
-    apis: ['./app.js'], 
+    apis: ['./app.js'],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- DOCUMENTACIÓN Y RUTAS (CRUD) ---
+// --- RUTAS DE LA API ---
 
 /**
  * @openapi
  * /productos:
  * get:
- * summary: Obtener todos los productos
+ * summary: Obtener lista de inventario
  * responses:
  * 200:
- * description: Lista de productos obtenida exitosamente.
+ * description: Lista obtenida
+ * content:
+ * application/json:
+ * schema:
+ * type: array
+ * items:
+ * $ref: '#/components/schemas/Producto'
  */
 app.get('/productos', (req, res) => {
     db.query('SELECT * FROM productos', (err, results) => {
-        if (err) return res.status(500).send(err);
+        if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
@@ -65,26 +86,22 @@ app.get('/productos', (req, res) => {
  * @openapi
  * /productos:
  * post:
- * summary: Agregar un nuevo producto
+ * summary: Agregar nuevo producto
  * requestBody:
  * required: true
  * content:
  * application/json:
  * schema:
- * type: object
- * properties:
- * nombre: { type: string }
- * precio: { type: number }
- * stock: { type: integer }
+ * $ref: '#/components/schemas/Producto'
  * responses:
  * 201:
- * description: Producto creado.
+ * description: Creado correctamente
  */
 app.post('/productos', (req, res) => {
     const { nombre, precio, stock } = req.body;
     db.query('INSERT INTO productos (nombre, precio, stock) VALUES (?, ?, ?)', 
     [nombre, precio, stock], (err, result) => {
-        if (err) return res.status(500).send(err);
+        if (err) return res.status(500).json(err);
         res.status(201).json({ id: result.insertId, nombre, precio, stock });
     });
 });
@@ -93,7 +110,7 @@ app.post('/productos', (req, res) => {
  * @openapi
  * /productos/{id}:
  * put:
- * summary: Actualizar un producto existente
+ * summary: Actualizar stock o precio
  * parameters:
  * - in: path
  * name: id
@@ -105,25 +122,18 @@ app.post('/productos', (req, res) => {
  * content:
  * application/json:
  * schema:
- * type: object
- * properties:
- * nombre:
- * type: string
- * precio:
- * type: number
- * stock:
- * type: integer
+ * $ref: '#/components/schemas/Producto'
  * responses:
  * 200:
- * description: Producto actualizado correctamente
+ * description: Actualizado
  */
 app.put('/productos/:id', (req, res) => {
     const { id } = req.params;
     const { nombre, precio, stock } = req.body;
-    const query = 'UPDATE productos SET nombre = ?, precio = ?, stock = ? WHERE id = ?';
-    db.query(query, [nombre, precio, stock, id], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ mensaje: "Producto actualizado", id });
+    db.query('UPDATE productos SET nombre=?, precio=?, stock=? WHERE id=?', 
+    [nombre, precio, stock, id], (err) => {
+        if (err) return res.status(500).json(err);
+        res.json({ mensaje: "Actualizado", id });
     });
 });
 
@@ -131,7 +141,7 @@ app.put('/productos/:id', (req, res) => {
  * @openapi
  * /productos/{id}:
  * delete:
- * summary: Eliminar un producto
+ * summary: Eliminar producto
  * parameters:
  * - in: path
  * name: id
@@ -140,18 +150,15 @@ app.put('/productos/:id', (req, res) => {
  * type: integer
  * responses:
  * 200:
- * description: Producto eliminado exitosamente
+ * description: Eliminado
  */
 app.delete('/productos/:id', (req, res) => {
     const { id } = req.params;
-    db.query('DELETE FROM productos WHERE id = ?', [id], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ mensaje: "Producto eliminado", id });
+    db.query('DELETE FROM productos WHERE id=?', [id], (err) => {
+        if (err) return res.status(500).json(err);
+        res.json({ mensaje: "Eliminado", id });
     });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`Documentación disponible en http://localhost:${PORT}/doc`);
-});
+app.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));
