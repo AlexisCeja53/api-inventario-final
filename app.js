@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// 1. CONEXIÓN A LA BASE DE DATOS (POOL)
+// 1. CONEXIÓN A LA BASE DE DATOS 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -18,7 +18,7 @@ const db = mysql.createPool({
   port: process.env.DB_PORT || 3306
 });
 
-// 2. CONFIGURACIÓN DE SWAGGER (URL CORREGIDA SIN TYPOS)
+// 2. CONFIGURACIÓN DE SWAGGER 
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -29,7 +29,6 @@ const swaggerOptions = {
     },
     servers: [
       {
-        // Aquí estaba el detalle: ya está sincronizado con tu URL real de Railway
         url: 'https://api-inventario-final-production.up.railway.app'
       }
     ],
@@ -54,7 +53,7 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- RUTAS CON COMENTARIOS ---
+// --- RUTAS ---
 
 /**
  * @swagger
