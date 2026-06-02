@@ -18,18 +18,19 @@ const db = mysql.createPool({
   port: process.env.DB_PORT || 3306
 });
 
-// 2. CONFIGURACIÓN DE SWAGGER (Esquema centralizado)
+// 2. CONFIGURACIÓN DE SWAGGER (URL CORREGIDA SIN TYPOS)
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'API - Inventario',
       version: '1.0.0',
-      description: 'Documentación del Sistema de Inventarios para el ITNL'
+      description: 'Documentación del Sistema de Inventarios'
     },
     servers: [
       {
-        url: 'https://api-final-inventario-production.up.railway.app'
+        // Aquí estaba el detalle: ya está sincronizado con tu URL real de Railway
+        url: 'https://api-inventario-final-production.up.railway.app'
       }
     ],
     components: {
@@ -53,7 +54,7 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- RUTAS CON COMENTARIOS REVISADOS ---
+// --- RUTAS CON COMENTARIOS ---
 
 /**
  * @swagger
@@ -86,7 +87,6 @@ app.get('/productos', (req, res) => {
  *     summary: Agregar nuevo producto
  *     tags:
  *       - Inventario
- *       
  *     requestBody:
  *       required: true
  *       content:
