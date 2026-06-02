@@ -6,7 +6,7 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// 1. Conexión a la Base de Datos
+// 1. Conexión a la Base de Datos (Usa las variables de Railway)
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -20,22 +20,29 @@ db.connect((err) => {
     console.log('Conectado a la base de datos');
 });
 
-// 2. Definición de Swagger en un Objeto (Sin comentarios sensibles)
+// 2. Definición de Swagger con la URL de PRODUCCIÓN
 const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
-        title: 'API- INVENTARIO',
+        title: 'API - Inventario',
         version: '1.0.0',
-        description: 'Proyecto Final de Sistemas para el Tercer Parcial'
+        description: 'Proyecto Final para el Tercer Parcial'
     },
+    servers: [
+        {
+            // ESTA ES TU URL DE RAILWAY. Swagger la usará para los botones.
+            url: 'https://api-final-inventario-production.up.railway.app',
+            description: 'Servidor en la Nube'
+        }
+    ],
     paths: {
         '/productos': {
             get: {
-                summary: 'Obtener lista de productos',
-                responses: { '200': { description: 'Éxito' } }
+                summary: 'Ver todos los productos',
+                responses: { '200': { description: 'Lista obtenida' } }
             },
             post: {
-                summary: 'Agregar nuevo producto',
+                summary: 'Agregar producto',
                 responses: { '201': { description: 'Creado' } }
             }
         },
