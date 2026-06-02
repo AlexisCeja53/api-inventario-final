@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// 1. CONEXIÓN A LA BASE DE DATOS (POOL para mayor estabilidad)
+// 1. CONEXIÓN A LA BASE DE DATOS (POOL para mayor estabilidad en Railway)
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -18,19 +18,19 @@ const db = mysql.createPool({
   port: process.env.DB_PORT || 3306
 });
 
-// 2. CONFIGURACIÓN DE SWAGGER (Título actualizado a "API - Inventario")
+// 2. CONFIGURACIÓN DE SWAGGER (Título: API - Inventario)
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'API - Inventario',
       version: '1.0.0',
-      description: 'Documentación del Sistema de Inventarios para el ITNL'
+      description: 'Sistema de Inventarios - Proyecto Final ITNL'
     },
     servers: [
       {
         url: 'https://api-final-inventario-production.up.railway.app',
-        description: 'Servidor en Railway'
+        description: 'Servidor Producción'
       }
     ]
   },
@@ -48,10 +48,10 @@ app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  * get:
  * tags:
  * - Productos
- * summary: Listar productos del inventario
+ * summary: Listar todos los productos
  * responses:
  * 200:
- * description: Éxito al obtener la lista
+ * description: Lista obtenida correctamente
  */
 app.get('/productos', (req, res) => {
   db.query('SELECT * FROM productos', (err, results) => {
@@ -82,14 +82,14 @@ app.get('/productos', (req, res) => {
  * type: integer
  * responses:
  * 201:
- * description: Producto creado exitosamente
+ * description: Producto creado
  */
 app.post('/productos', (req, res) => {
   const { nombre, precio, stock } = req.body;
   db.query('INSERT INTO productos (nombre, precio, stock) VALUES (?, ?, ?)', 
   [nombre, precio, stock], (err, result) => {
     if (err) return res.status(500).json(err);
-    res.status(201).json({ id: result.insertId, mensaje: "Guardado" });
+    res.status(201).json({ id: result.insertId, mensaje: "Producto guardado" });
   });
 });
 
@@ -99,7 +99,7 @@ app.post('/productos', (req, res) => {
  * put:
  * tags:
  * - Productos
- * summary: Actualizar un producto por ID
+ * summary: Actualizar un producto existente
  * parameters:
  * - in: path
  * name: id
@@ -129,7 +129,7 @@ app.put('/productos/:id', (req, res) => {
   db.query('UPDATE productos SET nombre=?, precio=?, stock=? WHERE id=?', 
   [nombre, precio, stock, id], (err) => {
     if (err) return res.status(500).json(err);
-    res.json({ mensaje: "Actualizado" });
+    res.json({ mensaje: "Actualizado correctamente" });
   });
 });
 
@@ -139,7 +139,7 @@ app.put('/productos/:id', (req, res) => {
  * delete:
  * tags:
  * - Productos
- * summary: Eliminar un producto por ID
+ * summary: Eliminar un producto del sistema
  * parameters:
  * - in: path
  * name: id
@@ -154,9 +154,9 @@ app.delete('/productos/:id', (req, res) => {
   const { id } = req.params;
   db.query('DELETE FROM productos WHERE id=?', [id], (err) => {
     if (err) return res.status(500).json(err);
-    res.json({ mensaje: "Eliminado" });
+    res.json({ mensaje: "Eliminado correctamente" });
   });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Servidor en línea'));
+app.listen(PORT, () => console.log('Servidor activo en puerto ' + PORT));
