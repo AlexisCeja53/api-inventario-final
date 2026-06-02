@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// 1. CONEXIÓN A LA BASE DE DATOS
+// 1. CONEXIÓN A LA BASE DE DATOS (POOL para mayor estabilidad)
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -18,19 +18,19 @@ const db = mysql.createPool({
   port: process.env.DB_PORT || 3306
 });
 
-// 2. CONFIGURACIÓN DE SWAGGER (Título actualizado)
+// 2. CONFIGURACIÓN DE SWAGGER (Título actualizado a "API - Inventario")
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'API - Inventario',
       version: '1.0.0',
-      description: 'Documentación del Sistema de Inventarios'
+      description: 'Documentación del Sistema de Inventarios para el ITNL'
     },
     servers: [
       {
         url: 'https://api-final-inventario-production.up.railway.app',
-        description: 'Servidor de Producción'
+        description: 'Servidor en Railway'
       }
     ]
   },
@@ -40,7 +40,7 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// --- RUTAS CON COMENTARIOS (MODALIDAD SOLICITADA) ---
+// --- RUTAS CON MODALIDAD DE COMENTARIOS ---
 
 /**
  * @openapi
@@ -48,10 +48,10 @@ app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  * get:
  * tags:
  * - Productos
- * summary: Obtener todos los productos
+ * summary: Listar productos del inventario
  * responses:
  * 200:
- * description: Lista obtenida exitosamente
+ * description: Éxito al obtener la lista
  */
 app.get('/productos', (req, res) => {
   db.query('SELECT * FROM productos', (err, results) => {
@@ -66,7 +66,7 @@ app.get('/productos', (req, res) => {
  * post:
  * tags:
  * - Productos
- * summary: Agregar un nuevo producto
+ * summary: Crear un nuevo producto
  * requestBody:
  * required: true
  * content:
@@ -82,14 +82,14 @@ app.get('/productos', (req, res) => {
  * type: integer
  * responses:
  * 201:
- * description: Creado
+ * description: Producto creado exitosamente
  */
 app.post('/productos', (req, res) => {
   const { nombre, precio, stock } = req.body;
   db.query('INSERT INTO productos (nombre, precio, stock) VALUES (?, ?, ?)', 
   [nombre, precio, stock], (err, result) => {
     if (err) return res.status(500).json(err);
-    res.status(201).json({ id: result.insertId, mensaje: "Producto creado" });
+    res.status(201).json({ id: result.insertId, mensaje: "Guardado" });
   });
 });
 
@@ -99,7 +99,7 @@ app.post('/productos', (req, res) => {
  * put:
  * tags:
  * - Productos
- * summary: Actualizar un producto existente
+ * summary: Actualizar un producto por ID
  * parameters:
  * - in: path
  * name: id
@@ -121,7 +121,7 @@ app.post('/productos', (req, res) => {
  * type: integer
  * responses:
  * 200:
- * description: Actualizado
+ * description: Producto actualizado
  */
 app.put('/productos/:id', (req, res) => {
   const { id } = req.params;
@@ -129,7 +129,7 @@ app.put('/productos/:id', (req, res) => {
   db.query('UPDATE productos SET nombre=?, precio=?, stock=? WHERE id=?', 
   [nombre, precio, stock, id], (err) => {
     if (err) return res.status(500).json(err);
-    res.json({ mensaje: "Producto actualizado" });
+    res.json({ mensaje: "Actualizado" });
   });
 });
 
@@ -139,7 +139,7 @@ app.put('/productos/:id', (req, res) => {
  * delete:
  * tags:
  * - Productos
- * summary: Eliminar un producto
+ * summary: Eliminar un producto por ID
  * parameters:
  * - in: path
  * name: id
@@ -148,15 +148,15 @@ app.put('/productos/:id', (req, res) => {
  * type: integer
  * responses:
  * 200:
- * description: Eliminado
+ * description: Producto eliminado
  */
 app.delete('/productos/:id', (req, res) => {
   const { id } = req.params;
   db.query('DELETE FROM productos WHERE id=?', [id], (err) => {
     if (err) return res.status(500).json(err);
-    res.json({ mensaje: "Producto eliminado" });
+    res.json({ mensaje: "Eliminado" });
   });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Servidor activo'));
+app.listen(PORT, () => console.log('Servidor en línea'));
